@@ -144,7 +144,8 @@ class VGGish(VGG):
     def __init__(self, urls, pretrained=True, preprocess=True, postprocess=True, progress=True):
         super().__init__(make_layers())
         if pretrained:
-            state_dict = hub.load_state_dict_from_url(urls['vggish'], progress=progress)
+            # state_dict = hub.load_state_dict_from_url(urls['vggish'], progress=progress)
+            state_dict = torch.load("./torchvggish/vggish-10086976.pth")
             super().load_state_dict(state_dict)
 
         self.preprocess = preprocess
@@ -152,7 +153,8 @@ class VGGish(VGG):
         if self.postprocess:
             self.pproc = Postprocessor()
             if pretrained:
-                state_dict = hub.load_state_dict_from_url(urls['pca'], progress=progress)
+                # state_dict = hub.load_state_dict_from_url(urls['pca'], progress=progress)
+                state_dict = torch.load("./torchvggish/vggish_pca_params-970ea276.pth")
                 # TODO: Convert the state_dict to torch
                 state_dict[vggish_params.PCA_EIGEN_VECTORS_NAME] = torch.as_tensor(
                     state_dict[vggish_params.PCA_EIGEN_VECTORS_NAME], dtype=torch.float
@@ -163,19 +165,20 @@ class VGGish(VGG):
 
                 self.pproc.load_state_dict(state_dict)
 
-    def forward(self, x, fs=None):
+    def forward(self, x, fs=None,overlaprate = 0):
         if self.preprocess:
-            x = self._preprocess(x, fs)
+            x = self._preprocess(x, fs ,overlaprate)
         x = VGG.forward(self, x)
         if self.postprocess:
             x = self._postprocess(x)
+        print(x)
         return x
 
-    def _preprocess(self, x, fs):
+    def _preprocess(self, x, fs, overlaprate = 0):
         if isinstance(x, np.ndarray):
-            x = vggish_input.waveform_to_examples(x, fs)
+            x = vggish_input.waveform_to_examples(x, fs,overlaprate=overlaprate)
         elif isinstance(x, str):
-            x = vggish_input.wavfile_to_examples(x)
+            x = vggish_input.wavfile_to_examples(x,overlaprate=overlaprate)
         else:
             raise AttributeError
         return x
