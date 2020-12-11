@@ -27,7 +27,7 @@ from . import vggish_params
 import soundfile as sf
 
 
-def waveform_to_examples(data, sample_rate, return_tensor=True):
+def waveform_to_examples(data, sample_rate, overlaprate = 0, return_tensor=True):
     """Converts audio waveform into an array of examples for VGGish.
 
   Args:
@@ -68,7 +68,7 @@ def waveform_to_examples(data, sample_rate, return_tensor=True):
     example_window_length = int(round(
         vggish_params.EXAMPLE_WINDOW_SECONDS * features_sample_rate))
     example_hop_length = int(round(
-        vggish_params.EXAMPLE_HOP_SECONDS * features_sample_rate))
+        vggish_params.EXAMPLE_HOP_SECONDS * features_sample_rate*(1-overlaprate)))
     log_mel_examples = mel_features.frame(
         log_mel,
         window_length=example_window_length,
@@ -81,7 +81,7 @@ def waveform_to_examples(data, sample_rate, return_tensor=True):
     return log_mel_examples
 
 
-def wavfile_to_examples(wav_file, return_tensor=True):
+def wavfile_to_examples(wav_file, overlaprate = 0,return_tensor=True):
     """Convenience wrapper around waveform_to_examples() for a common WAV format.
 
   Args:
@@ -95,4 +95,4 @@ def wavfile_to_examples(wav_file, return_tensor=True):
     wav_data, sr = sf.read(wav_file, dtype='int16')
     assert wav_data.dtype == np.int16, 'Bad sample type: %r' % wav_data.dtype
     samples = wav_data / 32768.0  # Convert to [-1.0, +1.0]
-    return waveform_to_examples(samples, sr, return_tensor)
+    return waveform_to_examples(samples, sr, overlaprate,return_tensor)
